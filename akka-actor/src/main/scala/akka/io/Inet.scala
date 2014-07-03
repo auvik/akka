@@ -84,7 +84,10 @@ object Inet {
      * For more information see [[java.nio.channels.MulticastChannel.join]]
      */
     final case class JoinGroup(group: InetAddress, interf: NetworkInterface) extends SocketOption {
-      override def beforeDatagramBind(ds: DatagramSocket): Unit = ds.getChannel.join(group, interf)
+      override def beforeDatagramBind(ds: DatagramSocket): Unit = {
+        ds.getChannel.join(group, interf)
+        //        ds.getChannel.join(group, NetworkInterface.getByInetAddress(InetAddress.getLocalHost))
+      }
     }
 
   }

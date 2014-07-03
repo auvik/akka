@@ -31,20 +31,15 @@ private[io] class UdpListener(val udp: UdpExt,
 
   context.watch(bind.handler) // sign death pact
 
-  val ch = bind.family match {
-    case Some(family) ⇒
-      try {
-        DatagramChannel.open(family)
-      } catch {
-        case e: Exception =>
-          bindCommander ! CommandFailed(bind)
-          log.debug("Failed to open UDP channel with protocol family [{}]: {}", bind.family, e)
-          context.stop(self)
-      }
-    case _            ⇒ DatagramChannel.open
+  val channel = try {
+    bind.family.fold(DatagramChannel.open)(fam ⇒ DatagramChannel.open(fam))
+  } catch {
+    case e: UnsupportedOperationException ⇒
+      bindCommander ! CommandFailed(bind)
+      log.debug("Failed to open UDP channel with protocol family [{}]: {}", bind.family, e)
+      context.stop(self)
+      DatagramChannel.open
   }
-
-  val channel = ch.asInstanceOf[DatagramChannel]
 
   channel.configureBlocking(false)
 

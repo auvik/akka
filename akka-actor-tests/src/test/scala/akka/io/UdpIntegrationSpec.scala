@@ -3,12 +3,16 @@
  */
 package akka.io
 
-import java.net.InetSocketAddress
+import java.net.{ InetAddress, InetSocketAddress, ProtocolFamily, StandardProtocolFamily, NetworkInterface }
 import akka.testkit.{ TestProbe, ImplicitSender, AkkaSpec }
 import akka.util.ByteString
 import akka.actor.ActorRef
 import akka.io.Udp._
 import akka.TestUtils._
+import scala.Serializable
+import scala.collection.immutable
+import akka.io.Inet.SocketOption
+import akka.io.Inet.SO.{ ReuseAddress, JoinGroup }
 
 class UdpIntegrationSpec extends AkkaSpec("""
     akka.loglevel = INFO
@@ -21,6 +25,12 @@ class UdpIntegrationSpec extends AkkaSpec("""
     commander.send(IO(Udp), Bind(handler, address))
     commander.expectMsg(Bound(address))
     commander.sender()
+  }
+
+  def bindUdp(family: ProtocolFamily, options: immutable.Traversable[SocketOption], address: InetSocketAddress, handler: ActorRef): TestProbe = {
+    val commander = TestProbe()
+    commander.send(IO(Udp), Bind(handler, address, options, Some(family)))
+    commander
   }
 
   val simpleSender: ActorRef = {
@@ -72,6 +82,25 @@ class UdpIntegrationSpec extends AkkaSpec("""
         if (i % 2 == 0) checkSendingToServer()
         else checkSendingToClient()
       }
+    }
+
+    "be able to bind to IPv4 and IPv6 addresses" in {
+      val ipv4Address = new InetSocketAddress("127.0.0.1", 0)
+      bindUdp(StandardProtocolFamily.INET, Nil, ipv4Address, testActor).expectMsgType[Bound]
+
+      val ipv6Address = new InetSocketAddress("::1", 0)
+      bindUdp(StandardProtocolFamily.INET6, Nil, ipv6Address, testActor).expectMsgType[Bound]
+    }
+
+    "fail when the protocol family is unsupported" in {
+      val unsupported = new ProtocolFamily with Serializable { def name() = "fake protocol" }
+      val address = new InetSocketAddress("", 0)
+      bindUdp(unsupported, Nil, address, testActor).expectMsgType[CommandFailed]
+    }
+
+    "be able to join an IPv4 multicast group" in {
+      val multicastAddress = new InetSocketAddress("0.0.0.0", 0)
+      bindUdp(StandardProtocolFamily.INET, List(ReuseAddress(true), JoinGroup(InetAddress.getByName("224.0.0.1"), NetworkInterface.getByInetAddress(InetAddress.getLocalHost))), multicastAddress, testActor).expectMsgType[Bound]
     }
   }
 
