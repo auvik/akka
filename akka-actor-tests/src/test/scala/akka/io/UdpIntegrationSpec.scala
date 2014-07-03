@@ -6,7 +6,7 @@ package akka.io
 import java.net.{ InetAddress, InetSocketAddress, ProtocolFamily, StandardProtocolFamily, NetworkInterface }
 import akka.testkit.{ TestProbe, ImplicitSender, AkkaSpec }
 import akka.util.ByteString
-import akka.actor.ActorRef
+import akka.actor.{ ActorSystem, ActorRef }
 import akka.io.Udp._
 import akka.TestUtils._
 import scala.Serializable
@@ -14,10 +14,7 @@ import scala.collection.immutable
 import akka.io.Inet.SocketOption
 import akka.io.Inet.SO.{ ReuseAddress, JoinGroup }
 
-class UdpIntegrationSpec extends AkkaSpec("""
-    akka.loglevel = INFO
-    akka.actor.serialize-creators = on""") with ImplicitSender {
-
+trait UdpSpecHelpers { this: AkkaSpec ⇒
   val addresses = temporaryServerAddresses(3, udp = true)
 
   def bindUdp(address: InetSocketAddress, handler: ActorRef): ActorRef = {
@@ -39,6 +36,12 @@ class UdpIntegrationSpec extends AkkaSpec("""
     commander.expectMsg(SimpleSenderReady)
     commander.sender()
   }
+}
+
+class UdpIntegrationSpec extends AkkaSpec("""
+    akka.loglevel = INFO
+    akka.actor.serialize-creators = on
+  """) with ImplicitSender with UdpSpecHelpers {
 
   "The UDP Fire-and-Forget implementation" must {
 
@@ -83,6 +86,9 @@ class UdpIntegrationSpec extends AkkaSpec("""
         else checkSendingToClient()
       }
     }
+  }
+
+  "The UDP Protocol Family option" must {
 
     "be able to bind to IPv4 and IPv6 addresses" in {
       val ipv4Address = new InetSocketAddress("127.0.0.1", 0)
@@ -97,11 +103,19 @@ class UdpIntegrationSpec extends AkkaSpec("""
       val address = new InetSocketAddress("", 0)
       bindUdp(unsupported, Nil, address, testActor).expectMsgType[CommandFailed]
     }
+  }
+}
 
+class UdpNoSerializeIntegrationSpec extends AkkaSpec("""
+    akka.loglevel = INFO
+    akka.actor.serialize-creators = on
+    akka.actor.serialize-messages = off
+  """) with ImplicitSender with UdpSpecHelpers {
+
+  "The UDP Protocol Family option" must {
     "be able to join an IPv4 multicast group" in {
       val multicastAddress = new InetSocketAddress("0.0.0.0", 0)
       bindUdp(StandardProtocolFamily.INET, List(ReuseAddress(true), JoinGroup(InetAddress.getByName("224.0.0.1"), NetworkInterface.getByInetAddress(InetAddress.getLocalHost))), multicastAddress, testActor).expectMsgType[Bound]
     }
   }
-
 }
