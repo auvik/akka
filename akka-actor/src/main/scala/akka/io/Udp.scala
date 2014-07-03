@@ -11,6 +11,7 @@ import akka.io.Inet.{ SoJavaFactories, SocketOption }
 import akka.util.Helpers.Requiring
 import akka.util.ByteString
 import akka.actor._
+import java.net.ProtocolFamily
 
 /**
  * UDP Extension for Akka’s IO layer.
@@ -94,7 +95,8 @@ object Udp extends ExtensionId[UdpExt] with ExtensionIdProvider {
    */
   final case class Bind(handler: ActorRef,
                         localAddress: InetSocketAddress,
-                        options: immutable.Traversable[SocketOption] = Nil) extends Command
+                        options: immutable.Traversable[SocketOption] = Nil,
+                        family: Option[ProtocolFamily] = None) extends Command
 
   /**
    * Send this message to the listener actor that previously sent a [[Bound]]
@@ -283,7 +285,7 @@ object UdpMessage {
   /**
    * Bind without specifying options.
    */
-  def bind(handler: ActorRef, endpoint: InetSocketAddress): Command = Bind(handler, endpoint, Nil)
+  def bind(handler: ActorRef, endpoint: InetSocketAddress): Command = Bind(handler, endpoint)
 
   /**
    * Send this message to the listener actor that previously sent a [[Udp.Bound]]

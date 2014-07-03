@@ -3,7 +3,7 @@
  */
 package akka.io
 
-import java.net.InetSocketAddress
+import java.net.{ ProtocolFamily, InetSocketAddress }
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 import java.nio.channels.SelectionKey._
@@ -31,7 +31,11 @@ private[io] class UdpListener(val udp: UdpExt,
 
   context.watch(bind.handler) // sign death pact
 
-  val channel = DatagramChannel.open
+  val channel = bind.family match {
+    case Some(family) ⇒ DatagramChannel.open(family)
+    case _            ⇒ DatagramChannel.open
+  }
+
   channel.configureBlocking(false)
 
   val localAddress =
