@@ -287,8 +287,8 @@ object UdpMessage {
   /**
    * Bind with options and protocol family.
    */
-  def bind(handler: ActorRef, endpoint: InetSocketAddress, options: JIterable[SocketOption], family: Option[ProtocolFamily]): Command =
-    Bind(handler, endpoint, options.asScala.to, family)
+  def bind(handler: ActorRef, endpoint: InetSocketAddress, options: JIterable[SocketOption], family: ProtocolFamily): Command =
+    Bind(handler, endpoint, options.asScala.to, Some(family))
 
   /**
    * Send this message to the listener actor that previously sent a [[Udp.Bound]]

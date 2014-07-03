@@ -3,7 +3,7 @@
  */
 package akka.io
 
-import java.net.{ ProtocolFamily, InetSocketAddress }
+import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 import java.nio.channels.SelectionKey._
