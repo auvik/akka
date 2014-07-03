@@ -3,7 +3,7 @@
  */
 package akka.io
 
-import java.net.{ DatagramSocket, Socket, ServerSocket }
+import java.net._
 
 object Inet {
 
@@ -75,6 +75,10 @@ object Inet {
     final case class TrafficClass(tc: Int) extends SocketOption {
       require(0 <= tc && tc <= 255, "TrafficClass needs to be in the interval [0, 255]")
       override def afterConnect(s: Socket): Unit = s.setTrafficClass(tc)
+    }
+
+    final case class JoinGroup(group: InetAddress, interf: NetworkInterface) extends SocketOption {
+      override def beforeDatagramBind(ds: DatagramSocket): Unit = ds.getChannel.join(group, interf)
     }
 
   }
