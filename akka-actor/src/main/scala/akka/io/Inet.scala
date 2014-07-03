@@ -3,7 +3,7 @@
  */
 package akka.io
 
-import java.net._
+import java.net.{ DatagramSocket, Socket, ServerSocket, InetAddress, NetworkInterface }
 
 object Inet {
 
@@ -77,6 +77,12 @@ object Inet {
       override def afterConnect(s: Socket): Unit = s.setTrafficClass(tc)
     }
 
+    /**
+     * [[akka.io.Inet.SocketOption]] to join a multicast group to begin
+     * receiving all datagrams sent to the group.
+     *
+     * For more information see [[java.nio.channels.MulticastChannel.join]]
+     */
     final case class JoinGroup(group: InetAddress, interf: NetworkInterface) extends SocketOption {
       override def beforeDatagramBind(ds: DatagramSocket): Unit = ds.getChannel.join(group, interf)
     }

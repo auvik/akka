@@ -3,15 +3,13 @@
  */
 package akka.io
 
-import java.net.DatagramSocket
-import java.net.InetSocketAddress
+import java.net.{ DatagramSocket, InetSocketAddress, ProtocolFamily }
 import com.typesafe.config.Config
 import scala.collection.immutable
 import akka.io.Inet.{ SoJavaFactories, SocketOption }
 import akka.util.Helpers.Requiring
 import akka.util.ByteString
 import akka.actor._
-import java.net.ProtocolFamily
 
 /**
  * UDP Extension for Akka’s IO layer.
@@ -285,7 +283,12 @@ object UdpMessage {
   /**
    * Bind without specifying options.
    */
-  def bind(handler: ActorRef, endpoint: InetSocketAddress): Command = Bind(handler, endpoint)
+  def bind(handler: ActorRef, endpoint: InetSocketAddress): Command = Bind(handler, endpoint, Nil)
+  /**
+   * Bind with options and protocol family.
+   */
+  def bind(handler: ActorRef, endpoint: InetSocketAddress, options: JIterable[SocketOption], family: Option[ProtocolFamily]): Command =
+    Bind(handler, endpoint, options.asScala.to, family)
 
   /**
    * Send this message to the listener actor that previously sent a [[Udp.Bound]]
