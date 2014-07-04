@@ -114,8 +114,10 @@ class UdpNoSerializeIntegrationSpec extends AkkaSpec("""
 
   "The UDP Protocol Family option" must {
     "be able to join an IPv4 multicast group" in {
-      val multicastAddress = new InetSocketAddress("0.0.0.0", 0)
-      bindUdp(StandardProtocolFamily.INET, List(ReuseAddress(true), JoinGroup(InetAddress.getByName("224.0.0.1"), NetworkInterface.getByInetAddress(InetAddress.getLocalHost))), multicastAddress, testActor).expectMsgType[Bound]
+      val multicastAddress = new InetSocketAddress("127.0.0.1", 0)
+      val group = InetAddress.getByName("224.0.0.1")
+      val interf = NetworkInterface.getByInetAddress(InetAddress.getLocalHost)
+      bindUdp(StandardProtocolFamily.INET, List(JoinGroup(group, interf)), multicastAddress, testActor).expectMsgType[Bound]
     }
   }
 }
